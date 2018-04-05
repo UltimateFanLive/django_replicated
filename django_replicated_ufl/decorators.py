@@ -60,3 +60,47 @@ class use_state_simple(ContextDecorator):
 
 use_master_simple = use_state_simple('master')
 use_slave_simple = use_state_simple('slave')
+
+
+def make_db_class_based_decorator(*args1, **kwargs1):
+    def _make_decorator(view_func):
+        middleware = ReplicationMiddleware(*args1, **kwargs1)
+
+        def _decorator(_, request, *args, **kwargs):
+            result = middleware.process_request(request)
+            if result is not None:
+                return result
+
+            result = middleware.process_view(request, view_func, args, kwargs)
+            if result is not None:
+                return result
+
+            try:
+                response = view_func(_, request, *args, **kwargs)
+            except Exception as e:
+                if hasattr(middleware, 'process_exception'):
+                    result = middleware.process_exception(request, e)
+                    if result is not None:
+                        return result
+                raise
+
+            if hasattr(response, 'render') and callable(response.render):
+                if hasattr(middleware, 'process_template_response'):
+                    response = middleware.process_template_response(request, response)
+                # Defer running of process_response until after the template
+                # has been rendered:
+                if hasattr(middleware, 'process_response'):
+                    callback = lambda response: middleware.process_response(request, response)
+                    response.add_post_render_callback(callback)
+            else:
+                if hasattr(middleware, 'process_response'):
+                    return middleware.process_response(request, response)
+
+            return response
+
+        return _decorator
+
+    return _make_decorator
+
+use_slave_class_based = make_db_class_based_decorator(forced_state='slave')
+use_master_class_based = make_db_class_based_decorator(forced_state='master')
