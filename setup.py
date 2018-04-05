@@ -5,7 +5,7 @@ setup(
     version='2.5',
     description='Django DB router for stateful master-slave replication',
     packages=[
-        'django_replicated',
+        'django_replicated_ufl',
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
