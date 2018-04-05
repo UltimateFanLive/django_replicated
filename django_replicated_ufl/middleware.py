@@ -26,7 +26,6 @@ except ImportError:
 from . import dbchecker
 from .utils import routers, get_object_name
 
-
 log = logging.getLogger(__name__)
 
 
@@ -45,6 +44,7 @@ class ReplicationMiddleware(MiddlewareMixin):
     updated to match master. Thus first redirect after POST is pointed to
     master connection even if it only GETs data.
     '''
+
     def __init__(self, get_response=None, forced_state=None):
         super(ReplicationMiddleware, self).__init__(get_response=get_response)
 
@@ -114,9 +114,9 @@ class ReplicationMiddleware(MiddlewareMixin):
 
             for lookup_view, forced_state in six.iteritems(overrides):
                 if (
-                    match.url_name == lookup_view or
-                    import_path == lookup_view or
-                    fnmatch.fnmatchcase(request.path_info, lookup_view)
+                                    match.url_name == lookup_view or
+                                    import_path == lookup_view or
+                            fnmatch.fnmatchcase(request.path_info, lookup_view)
                 ):
                     state = forced_state
                     break
@@ -145,7 +145,6 @@ class ReplicationMiddleware(MiddlewareMixin):
                             max_age=settings.REPLICATED_FORCE_MASTER_COOKIE_MAX_AGE)
 
 
-
 class DefaultMasterReplicationMiddleware(ReplicationMiddleware):
     def process_request(self, request):
         if self.forced_state is not None:
@@ -162,7 +161,6 @@ class DefaultMasterReplicationMiddleware(ReplicationMiddleware):
 
             log.debug('init state: %s', state)
         routers.init(state)
-
 
 
 class ReadOnlyMiddleware(MiddlewareMixin):
