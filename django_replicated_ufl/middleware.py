@@ -124,18 +124,11 @@ class ReplicationMiddleware(MiddlewareMixin):
 
     def handle_redirect_after_write(self, request, response):
         '''
-        Sets a flag using cookies to redirect requests happening after
-        successful write operations to ensure that corresponding read
-        request will use master database. This avoids situation when
-        replicas lagging behind on updates a little.
+        Sets a flag using cookies to use master after any writes on system
         '''
-        force_master_codes = settings.REPLICATED_FORCE_MASTER_COOKIE_STATUS_CODES
-        if response.status_code in force_master_codes and routers.state() == 'master':
+        if request.method in ('POST', 'DELETE', 'PUT'):
             log.debug('set force master cookie for %s', request.path)
             self.set_force_master_cookie(response)
-        else:
-            if settings.REPLICATED_FORCE_MASTER_COOKIE_NAME in request.COOKIES:
-                response.delete_cookie(settings.REPLICATED_FORCE_MASTER_COOKIE_NAME)
 
     def set_force_master_cookie(self, response):
         '''
